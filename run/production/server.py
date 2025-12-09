@@ -52,10 +52,13 @@ async def chat(
     api_key: str | None = Header(default=None, alias="X-API-Key"),
 ):
     _auth(settings, api_key)
+    thread_id = payload.thread_id or "default"
     # Use CEO entry point (first entry agent)
     entry = agency.entry_points[0]
-    result = await agency.get_response(message=payload.message, entry_point=entry, thread_id=payload.thread_id)
-    return ChatResponse(thread_id=result.thread_id, output=result.final_output)
+    result = await agency.get_response(message=payload.message, entry_point=entry)
+    # RunResult does not carry thread identifiers; echo provided/default thread id
+    output_text = str(result.final_output) if result.final_output is not None else ""
+    return ChatResponse(thread_id=thread_id, output=output_text)
 
 
 __all__ = ["app"]

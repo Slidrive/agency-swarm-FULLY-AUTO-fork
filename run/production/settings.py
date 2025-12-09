@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ProductionSettings(BaseSettings):
     """Environment-driven settings for a production agency deployment."""
+
+    model_config = SettingsConfigDict(env_prefix="AGENCY_", case_sensitive=False)
 
     agency_name: str = Field(default="Production Agency")
     model: str = Field(default="gpt-5")
@@ -18,7 +21,3 @@ class ProductionSettings(BaseSettings):
     genesis_api_key: str | None = None
     voice_api_base: str | None = None
     voice_api_key: str | None = None
-
-    class Config:
-        env_prefix = "AGENCY_"
-        case_sensitive = False

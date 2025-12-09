@@ -7,6 +7,7 @@ and a task router that caps each agent at three active tasks with overflow queue
 - In-memory task router (`TaskRouter`) with claim/complete/stats tools
 - Default roster: CEO, Product, TechLead, Builder-1, QA, Ops
 - Directional communication flows from CEO to specialists and back (minimal cross-talk)
+- OpenAPI tool loading: agents point to `run/production/schemas/` for automatic tool generation
 
 ## Configure
 Set environment variables (or `.env`) using the `AGENCY_` prefix:
@@ -15,10 +16,30 @@ Set environment variables (or `.env`) using the `AGENCY_` prefix:
 - `AGENCY_AGENCY_NAME` (display name)
 - Optional: `AGENCY_GENESIS_API_BASE`, `AGENCY_GENESIS_API_KEY`, `AGENCY_VOICE_API_BASE`, `AGENCY_VOICE_API_KEY` (placeholders only)
 
+OpenAPI schemas:
+- Place schema files under `run/production/schemas/` (example: `example_api.json`).
+- If the API requires headers/params (e.g., auth tokens), set per-schema values in `ProductionSettings` via `api_headers`/`api_params` or extend the builder accordingly.
+
 ## Run
 ```bash
 uv run python -c "from run.production.agency import build_agency; agency = build_agency(); print('Agency ready:', agency.name)"
 ```
+
+### Run API server (FastAPI + uvicorn)
+```bash
+cd /workspaces/agency-swarm
+source .venv/bin/activate  # if not active
+uvicorn run.production.server:app --host 0.0.0.0 --port 8000
+```
+
+`POST http://localhost:8000/chat`
+Body:
+```json
+{ "message": "Your request", "thread_id": "optional-thread" }
+```
+Returns: `{ "thread_id": "...", "output": "..." }`
+
+Auth: if you set `AGENCY_CLIENT_API_KEY` in env, send it as header `X-API-Key`.
 
 ## Next steps (recommended for public launch)
 - Persist threads/tasks: implement `load_threads_callback`/`save_threads_callback` with Postgres.

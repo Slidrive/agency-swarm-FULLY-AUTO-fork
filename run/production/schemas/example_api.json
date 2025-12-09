@@ -8,6 +8,7 @@
     "/items": {
       "get": {
         "summary": "List items",
+        "description": "Retrieve a paginated list of items from the partner API.",
         "operationId": "listItems",
         "parameters": [
           {
@@ -34,3 +35,5 @@
     }
   }
 }
+
+

@@ -9,13 +9,13 @@ from .settings import ProductionSettings
 
 
 def _build_router_tools(router: TaskRouter) -> list:
-    @function_tool
+    @function_tool(strict_mode=False)
     def claim_task(task_id: str, target_agent: str, payload: str | dict | None = None) -> str:
         """Claim or enqueue a task for the target agent respecting the task cap."""
 
         return router.schedule(RoutedTask(task_id=task_id, target_agent=target_agent, payload=payload))
 
-    @function_tool
+    @function_tool(strict_mode=False)
     def complete_task(task_id: str, target_agent: str) -> str:
         """Mark a task done and release capacity; may dispatch the next queued task."""
 
@@ -24,7 +24,7 @@ def _build_router_tools(router: TaskRouter) -> list:
             return f"released_and_dispatched:{routed.task_id}:{routed.target_agent}"
         return "released"
 
-    @function_tool
+    @function_tool(strict_mode=False)
     def task_router_stats() -> dict:
         """Return current active counts and queue depth for monitoring."""
 
@@ -33,7 +33,15 @@ def _build_router_tools(router: TaskRouter) -> list:
     return [claim_task, complete_task, task_router_stats]
 
 
-def _agent(name: str, instructions: str, tools: Iterable, settings: ProductionSettings) -> Agent:
+def _agent(
+    name: str,
+    instructions: str,
+    tools: Iterable,
+    settings: ProductionSettings,
+    schemas_folder: str | None = None,
+    api_headers: dict[str, dict[str, str]] | None = None,
+    api_params: dict[str, dict[str, str | int | float]] | None = None,
+) -> Agent:
     return Agent(
         name=name,
         description=instructions.split("\n", 1)[0],
@@ -41,6 +49,9 @@ def _agent(name: str, instructions: str, tools: Iterable, settings: ProductionSe
         tools=list(tools),
         model=settings.model,
         model_settings=ModelSettings(max_tokens=4096),
+        schemas_folder=schemas_folder,
+        api_headers=api_headers or {},
+        api_params=api_params or {},
     )
 
 
@@ -48,6 +59,10 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
     settings = settings or ProductionSettings()
     router = TaskRouter(max_active_per_agent=settings.max_active_tasks_per_agent)
     router_tools = _build_router_tools(router)
+
+    schemas_folder = "run/production/schemas"
+    api_headers = {}
+    api_params = {}
 
     ceo = _agent(
         "CEO",
@@ -57,6 +72,7 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
         """.strip(),
         router_tools,
         settings,
+        schemas_folder=None,
     )
 
     product = _agent(
@@ -67,6 +83,9 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
         """.strip(),
         router_tools,
         settings,
+        schemas_folder=schemas_folder,
+        api_headers=api_headers,
+        api_params=api_params,
     )
 
     tech_lead = _agent(
@@ -77,6 +96,9 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
         """.strip(),
         router_tools,
         settings,
+        schemas_folder=schemas_folder,
+        api_headers=api_headers,
+        api_params=api_params,
     )
 
     builder_1 = _agent(
@@ -86,6 +108,9 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
         """.strip(),
         router_tools,
         settings,
+        schemas_folder=schemas_folder,
+        api_headers=api_headers,
+        api_params=api_params,
     )
 
     qa = _agent(
@@ -95,6 +120,9 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
         """.strip(),
         router_tools,
         settings,
+        schemas_folder=schemas_folder,
+        api_headers=api_headers,
+        api_params=api_params,
     )
 
     ops = _agent(
@@ -104,6 +132,9 @@ def build_agency(settings: ProductionSettings | None = None) -> Agency:
         """.strip(),
         router_tools,
         settings,
+        schemas_folder=schemas_folder,
+        api_headers=api_headers,
+        api_params=api_params,
     )
 
     communication_flows = [
