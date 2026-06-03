@@ -163,3 +163,6 @@ settings.json
 .DS_Store
 tests/test_agents/
 test_agents/
+# Agency Studio runtime state
+agency_studio_config.json
+agency_studio_assistants.json
