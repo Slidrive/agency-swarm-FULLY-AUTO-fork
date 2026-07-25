@@ -1,5 +1,5 @@
-openai==1.41.0
-httpx>=0.23.0,<0.28.0
+openai>=1.52.0
+httpx>=0.23.0
 docstring_parser==0.16
 pydantic==2.8.2
 datamodel-code-generator==0.25.8
